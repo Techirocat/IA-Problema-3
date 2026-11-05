@@ -42,6 +42,6 @@ interface Ilayout {
     */
     public List<Ilayout> children ();
 
-
+    Object clone();
 
 }

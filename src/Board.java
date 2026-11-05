@@ -1,8 +1,10 @@
 import java.util.*;
-// import java.util.ArrayList;
 
 /**
- * Represents a board.
+ * Representa o tabuleiro do Jogo do Galo.
+ * Guarda o conteúdo de cada casa, o jogador que tem a vex, as jogadas
+ * disponíveis e o estado do jogo.
+ * As casas são indexadas de 0 a N*M-1, da esquerda para a direita e de cima para baixo.
  */
 public class Board implements Ilayout,Cloneable{
     private ID[][] board;
@@ -13,7 +15,9 @@ public class Board implements Ilayout,Cloneable{
     private int moveCount;
     private boolean gameOver;
 
-
+    /**
+     * Cria um tabuleiro vazio, com o jogador X a começar
+     */
     Board() {
         board = new ID[N][M];
         movesAvailable = new HashSet<>();
@@ -21,8 +25,7 @@ public class Board implements Ilayout,Cloneable{
     }
 
     /**
-     * Set the cells to be blank and load the available moves (all the moves are
-     * available at the start of the game).
+     * Coloca todas as casas a vazio e carrega as jogadas disponíveis
      */
     private void initialize () {
         for (int row = 0; row < N; row++)
@@ -37,7 +40,7 @@ public class Board implements Ilayout,Cloneable{
     }
 
     /**
-     * Restart the game with a new blank board.
+     * Reinicia o jogo com um tabuleiro vazio, com o jogador X a começar
      */
     public void reset() {
         moveCount = 0;
@@ -48,22 +51,67 @@ public class Board implements Ilayout,Cloneable{
     }
 
     /**
-     * Places an X or an O on the specified index depending on whose turn it is.
-     * @param index     position starts in 0 and increases from left to right and from top to bottom
-     * @return          true if the move has not already been played
+     * Verifica se o jogador que acabou de jogar completou uma linha,
+     * coluna ou diagonal. Em caso afirmativo, define-o como vencedor
+     * e marca o jogo como terminado
+     */
+    private void checkWinner() {
+        ID player = playersTurn;
+
+        // Verificar as linhas e as colunas
+        for (int i = 0; i < N; i++) {
+            // Verificar Linhas
+            if (board[i][0] == player && board[i][1] == player && board[i][2] == player ) {
+                winner = player;
+                gameOver = true;
+                return;
+            }
+
+            // Verificar Coluna
+            if (board[0][i] == player && board[1][i] == player && board[2][i] == player ) {
+                winner = player;
+                gameOver = true;
+                return;
+            }
+        }
+
+        // Verificar Diagonal Principal
+        if (board[0][0] == player && board[1][1] == player && board[2][2] == player ) {
+            winner = player;
+            gameOver = true;
+            return;
+        }
+
+        // Verificar Diagonal Secundária
+        if (board[0][2] == player && board[1][1] == player && board[2][0] == player ) {
+            winner = player;
+            gameOver = true;
+        }
+    }
+
+
+    /**
+     * Coloca um X ou um O na casa indicada, consoante o jogador que tem a vez
+     *
+     * @param index índice da casa, de 0 a 9
+     * @return true se a jogada foi efetuada, false se a casa já estava ocupada
+     * @throws IllegalStateException se o jogo já tiver terminado
      */
     public boolean move (int index) {
         return move(index% M, index/M);
     }
 
     /**
-     * Places an X or an O on the specified location depending on who turn it is.
-     * @param x         the x coordinate of the location
-     * @param y         the y coordinate of the location
-     * @return          true if the move has not already been played
+     * Coloca um X ou um O na posição indicada, consoante o jogador que tem a vez
+     * Depois da jogada, verifica se houve vitória ou empate e passa a vez
+     * ao outro jogador
+     *
+     * @param x coluna da casa
+     * @param y linha da casa
+     * @return true se a jogada foi efetuada, false se a casa já estava ocupada
+     * @throws IllegalStateException se o jogo já tiver terminado
      */
    public boolean move (int x, int y) {
-
         if (gameOver) {
             throw new IllegalStateException("Game over. No more moves can be played.");
         }
@@ -84,34 +132,35 @@ public class Board implements Ilayout,Cloneable{
         }
 
         // Check for a winner.
+        checkWinner();
 
-        /** YOUR CODE HERE */
-
-
-        playersTurn = (playersTurn == ID.X) ? ID.O : ID.X;
+       playersTurn = (playersTurn == ID.X) ? ID.O : ID.X;
         return true;
     }
 
     /**
-     * Check to see if the game is over (if there is a winner or a draw).
-     * @return          true if the game is over
+     * Verifica se o jogo terminou
+     *
+     * @return true se o jogo terminou, false cas contrário
      */
     public boolean isGameOver () {
         return gameOver;
     }
 
-
-
     /**
-     * Check to see who's turn it is.
-     * @return          the player who's turn it is
+     * Indica o jogador que tem a ver de jogar
+     *
+     * @return o jogador que tem a vez
      */
     public ID getTurn () {
         return playersTurn;
     }
 
     /**
-     * @return          the player who won (or Blank if the game is a draw)
+     * Indica o vencedor do jogo
+     *
+     * @return o jogador vencedor ou "Blank" em caso de empate
+     * @throws IllegalStateException se o jogo ainda não tiver terminado
      */
     public ID getWinner () {
         if (!gameOver) {
@@ -121,17 +170,18 @@ public class Board implements Ilayout,Cloneable{
     }
 
     /**
-     * Get the indexes of all the positions on the board that are empty.
-     * @return          the empty cells
+     * Devolve os índices de todas as casas vazias
+     *
+     * @return conjunto com os índices das casas vazias
      */
     public HashSet<Integer> getAvailableMoves () {
         return new HashSet<>(movesAvailable);
     }
 
-
-
     /**
-     * @return  an deep copy of the board
+     * Cria uma cópia profunda do tabuleiro
+     *
+     * @return uma cópia independente deste tabuleiro
      */
     public Object clone () {
     	try {
@@ -142,12 +192,12 @@ public class Board implements Ilayout,Cloneable{
 	        	for (int j=0; j<M; j++)
 	        		b.board[i][j] = this.board[i][j];
 
-	        b.playersTurn       = this.playersTurn;
-	        b.winner            = this.winner;
-	        b.movesAvailable    = new HashSet<Integer>();
+	        b.playersTurn = this.playersTurn;
+	        b.winner = this.winner;
+	        b.movesAvailable = new HashSet<Integer>();
 	        b.movesAvailable.addAll(this.movesAvailable);
-	        b.moveCount         = this.moveCount;
-	        b.gameOver          = this.gameOver;
+	        b.moveCount = this.moveCount;
+	        b.gameOver = this.gameOver;
 	        return b;
     	}
     	catch (Exception e) {
@@ -155,6 +205,12 @@ public class Board implements Ilayout,Cloneable{
     	}
     }
 
+    /**
+     * Devolve uma representação textual do tabuleiro, uma linha por fila
+     * As casas vazias aparecem como "_"
+     *
+     * @return o tabuleiro em formato de texto
+     */
     @Override
     public String toString () {
         StringBuilder sb = new StringBuilder();
@@ -175,17 +231,48 @@ public class Board implements Ilayout,Cloneable{
         return new String(sb);
     }
 
-     /**
-         *
-         * @return the children of the receiver.
+    /**
+     * Verifica se uma casa está vazia
+     *
+     * @param index índice da casa
+     * @return true se a casa estiver vazia
      */
-     public List<Ilayout> children() {
+    public boolean isBlank (int index) {
+        int x=index/M;
+        int y=index%M;
+        return (board[x][y] == ID.Blank);
+    }
+
+
+    /**
+     * Gera todos os estados que resultam de uma jogada válida
+     * a parir deste tabuleiro
+     *
+     * @return lista com um tabuleiro por cada casa vazia
+     */
+    public List<Ilayout> children() {
+        List<Ilayout> list = new ArrayList<>();
 
         // YOUR CODE HERE
-         return null;
-     }
+        for (int i=0; i<N * M; i++){
+            if(isBlank(i)){
+                Board child = (Board) this.clone();
+                child.move(i);
+                list.add(child);
+            }
+        }
+
+         return list;
+    }
 
 
+    /**
+     * Compara este tabuleiro com outro objeto. Dois tabuleiros são iguais
+     * se tiverem o mesmo conteúdo em todas as casas
+     *
+     * @param other objeto a comparar
+     * @return true se os tabuleiros tiverem o mesmo conteúdo, false caso contrário
+     */
 	@Override
 	public boolean equals(Object other) {
 		if (other == this) return true;
@@ -197,16 +284,15 @@ public class Board implements Ilayout,Cloneable{
             for (int y=0; y<M; y++)
             	if (board[x][y] != that.board[x][y]) return false;
         return true;
-	}
+    }
 
+    /**
+     * Calcula o código de hash com base no conteúdo das casas
+     *
+     * @return o código de hash do tabuleiro
+     */
 	@Override
 	public int hashCode() {
 		return Arrays.deepHashCode(board);
-	}
-
-	public boolean isBlank (int index) {
-		int x=index/M;
-		int y=index%M;
-        return (board[x][y] == ID.Blank);
 	}
 }

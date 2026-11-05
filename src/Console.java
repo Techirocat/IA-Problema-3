@@ -1,13 +1,8 @@
 import java.util.Scanner;
-import java.util.Timer;
-import java.util.TimerTask;
-
 
 /**
  * For playing in the console.
  */
-
-
 public class Console {
     private Board board;
     private Scanner sc = new Scanner(System.in);
@@ -31,19 +26,19 @@ public class Console {
 
 
     /**
-     * Handle the move to be played,(
+     * Handle the move to be played
      */
-
     private void playMove () {
     	int position;
 
-        if (board.getTurn() == Ilayout.ID.X) {
-        	position=getHumanMove();
-        	//position = XAgent.play(board);
+        if (board.getTurn() == Ilayout.ID.X) { // Turno do X
+        	//position=getHumanMove();
+        	position = XAgent.play(board);
         	board.move(position);
 
-        } else {
+        } else { // Turno do O
         	position = XAgent.play(board);
+            //position = getHumanMove();
         	board.move(position);
         }
     }
@@ -89,7 +84,7 @@ public class Console {
 
 
      void main()  {
-    	    final int repetitions=3;
+    	    final int repetitions=100;
     	    long times = 0;
     	    for(int i=0; i<repetitions; i++) {
     	    	Console game = new Console();
