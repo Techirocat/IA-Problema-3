@@ -1,4 +1,7 @@
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * For playing in the console.
@@ -6,22 +9,39 @@ import java.util.Scanner;
 public class Console {
     private Board board;
     private Scanner sc = new Scanner(System.in);
+    private final Random rand = new Random();
 
     public Console() {
         board = new Board();
     }
 
     /**
-     * Game on
+     * Joga um jogo completo, do tabuleiro vazio até ao fim
+     *
+     * @return o vencedor do jogo, ou Blank em caso de empate
+     * @post o jogo terminou
      */
-    private void play () {
+    private Ilayout.ID play () {
         while (true) {
             playMove();
             if (board.isGameOver()) {
                 printWinner();
-                break;
+                return board.getWinner();
             }
         }
+    }
+
+    /**
+     * Mostra o número de vitórias de cada jogador e de empates
+     *
+     * @param vitoriasX número de jogos ganhos pelo X
+     * @param empates número de jogos empatados
+     * @param vitoriasO número de jogos ganhos pelo O
+     */
+    private static void printResultados(int vitoriasX, int empates, int vitoriasO) {
+        IO.println("\nX: " + vitoriasX);
+        IO.println("Draw: " + empates);
+        IO.println("O: " + vitoriasO);
     }
 
 
@@ -29,23 +49,25 @@ public class Console {
      * Handle the move to be played
      */
     private void playMove () {
-    	int position;
+        int position;
 
         if (board.getTurn() == Ilayout.ID.X) { // Turno do X
-        	//position=getHumanMove();
-        	position = XAgent.play(board);
-        	board.move(position);
+            //position=getHumanMove();
+            //position = getRandomMove();
+            position = XAgent.play(board);
+            board.move(position);
 
         } else { // Turno do O
-        	position = XAgent.play(board);
-            //position = getHumanMove();
-        	board.move(position);
+            //position = XAgent.play(board);
+            //position = getRandomMove();
+            position = getHumanMove();
+            board.move(position);
         }
     }
 
     private void printGameStatus () {
-       IO.println("\n" + board + "\n");
-       IO.println(board.getTurn().name() + "'s turn.");
+        IO.println("\n" + board + "\n");
+        IO.println(board.getTurn().name() + "'s turn.");
     }
 
     /**
@@ -79,28 +101,56 @@ public class Console {
     private void printWinner () {
         Ilayout.ID winner = board.getWinner();
 
-       IO.println("\n" + board + "\n");
+        IO.println("\n" + board + "\n");
 
         if (winner == Ilayout.ID.Blank) {
-           IO.println("It's a draw.");
+            IO.println("It's a draw.");
         } else {
-           IO.println("Player " + winner.toString() + " wins!");
+            IO.println("Player " + winner.toString() + " wins!");
         }
     }
 
 
+    /**
+     * Jogador aleatório: escolhe uma casa vazia ao acaso
+     *
+     * @return o índice de uma casa vazia
+     * @pre !board.isGameOver()
+     */
+    private int getRandomMove() {
+        List<Integer> livres = new ArrayList<>(board.getAvailableMoves());
+        return livres.get(rand.nextInt(livres.size()));
+    }
 
-     void main()  {
-    	    final int repetitions=100;
-    	    long times = 0;
-    	    for(int i=0; i<repetitions; i++) {
-    	    	Console game = new Console();
-	    	    long startTime = System.currentTimeMillis();
-	    	    game.play();
-	    	    long totalTime = System.currentTimeMillis() - startTime;
-	    	    times += totalTime;
-    	    }
-    	   IO.println("Av Time: " + times*1.0f/repetitions+ " milisecs");
+    /**
+     * Joga vários jogos seguidos e mostra o tempo médio por jogo
+     * e o número de vitórias de cada jogador e de empates
+     */
+    void main()  {
+        final int repetitions = 1;
+        long times = 0;
+        int vitoriasX = 0, empates = 0, vitoriasO = 0;
+
+        for (int i = 0; i < repetitions; i++) {
+            Console game = new Console();
+            long startTime = System.currentTimeMillis();
+
+            Ilayout.ID winner = game.play();
+
+            long totalTime = System.currentTimeMillis() - startTime;
+            times += totalTime;
+
+            if (winner == Ilayout.ID.X) {
+                vitoriasX++;
+            } else if (winner == Ilayout.ID.O) {
+                vitoriasO++;
+            } else {
+                empates++;
+            }
+        }
+
+        IO.println("Av Time: " + times * 1.0f / repetitions + " milisecs");
+        printResultados(vitoriasX, empates, vitoriasO);
     }
 
 }
