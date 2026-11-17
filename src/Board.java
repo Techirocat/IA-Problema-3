@@ -2,7 +2,7 @@ import java.util.*;
 
 /**
  * Representa o tabuleiro do Jogo do Galo.
- * Guarda o conteúdo de cada casa, o jogador que tem a vex, as jogadas
+ * Guarda o conteúdo de cada casa, o jogador que tem a vez, as jogadas
  * disponíveis e o estado do jogo.
  * As casas são indexadas de 0 a N*M-1, da esquerda para a direita e de cima para baixo.
  */
@@ -40,7 +40,8 @@ public class Board implements Ilayout,Cloneable{
     }
 
     /**
-     * Reinicia o jogo com um tabuleiro vazio, com o jogador X a começar
+     * Reinicia o jogo com um tabuleiro vazio, com o jogador X a começar.
+     * @post tabuleiro vazio, getTurn() == X, !isGameOver() e getAvailableMoves().size() == N*M
      */
     public void reset() {
         moveCount = 0;
@@ -93,9 +94,13 @@ public class Board implements Ilayout,Cloneable{
     /**
      * Coloca um X ou um O na casa indicada, consoante o jogador que tem a vez
      *
-     * @param index índice da casa, de 0 a 9
+     * @param index índice da casa, de 0 a 8
      * @return true se a jogada foi efetuada, false se a casa já estava ocupada
      * @throws IllegalStateException se o jogo já tiver terminado
+     * @pre !isGameOver() e 0 <= index < N*M
+     * @post se a casa estava vazia: fica com a marca do jogador que tinha a vez,
+     * index deixa de estar em getAvailableMoves() e a vez passa ao outro jogador;
+     * se estava ocupada: o tabuleiro não é alterado
      */
     public boolean move (int index) {
         return move(index% M, index/M);
@@ -110,6 +115,8 @@ public class Board implements Ilayout,Cloneable{
      * @param y linha da casa
      * @return true se a jogada foi efetuada, false se a casa já estava ocupada
      * @throws IllegalStateException se o jogo já tiver terminado
+     * @pre !isGameOver(), 0 <= x < M e 0 <= y < N
+     * @post (igual ao de move(int index))
      */
    public boolean move (int x, int y) {
         if (gameOver) {
@@ -123,7 +130,7 @@ public class Board implements Ilayout,Cloneable{
         }
 
         moveCount++;
-        movesAvailable.remove(y * N + x);
+        movesAvailable.remove(y * M + x);
 
         // The game is a draw.
         if (moveCount == N * M) {
@@ -141,14 +148,14 @@ public class Board implements Ilayout,Cloneable{
     /**
      * Verifica se o jogo terminou
      *
-     * @return true se o jogo terminou, false cas contrário
+     * @return true se o jogo terminou, false caso contrário
      */
     public boolean isGameOver () {
         return gameOver;
     }
 
     /**
-     * Indica o jogador que tem a ver de jogar
+     * Indica o jogador que tem a vez de jogar
      *
      * @return o jogador que tem a vez
      */
@@ -161,6 +168,8 @@ public class Board implements Ilayout,Cloneable{
      *
      * @return o jogador vencedor ou "Blank" em caso de empate
      * @throws IllegalStateException se o jogo ainda não tiver terminado
+     * @pre isGameOver()
+     * @post devolve X, O ou Blank (empate)
      */
     public ID getWinner () {
         if (!gameOver) {
@@ -173,6 +182,7 @@ public class Board implements Ilayout,Cloneable{
      * Devolve os índices de todas as casas vazias
      *
      * @return conjunto com os índices das casas vazias
+     * @post devolve uma cópia: alterá-la não altera o tabuleiro
      */
     public HashSet<Integer> getAvailableMoves () {
         return new HashSet<>(movesAvailable);
@@ -182,6 +192,7 @@ public class Board implements Ilayout,Cloneable{
      * Cria uma cópia profunda do tabuleiro
      *
      * @return uma cópia independente deste tabuleiro
+     * @post o resultado é igual a este tabuleiro (equals) mas é um objeto independente
      */
     public Object clone () {
     	try {
@@ -207,7 +218,7 @@ public class Board implements Ilayout,Cloneable{
 
     /**
      * Devolve uma representação textual do tabuleiro, uma linha por fila
-     * As casas vazias aparecem como "_"
+     * As casas vazias aparecem como "-"
      *
      * @return o tabuleiro em formato de texto
      */
@@ -236,6 +247,7 @@ public class Board implements Ilayout,Cloneable{
      *
      * @param index índice da casa
      * @return true se a casa estiver vazia
+     * @pre 0 <= index < N*M
      */
     public boolean isBlank (int index) {
         int x=index/M;
@@ -246,9 +258,11 @@ public class Board implements Ilayout,Cloneable{
 
     /**
      * Gera todos os estados que resultam de uma jogada válida
-     * a parir deste tabuleiro
+     * a partir deste tabuleiro
      *
      * @return lista com um tabuleiro por cada casa vazia
+     * @pre !isGameOver()
+     * @post um filho por cada casa vazia; este tabuleiro não é alterado
      */
     public List<Ilayout> children() {
         List<Ilayout> list = new ArrayList<>();

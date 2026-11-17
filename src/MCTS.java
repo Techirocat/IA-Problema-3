@@ -6,24 +6,38 @@
 public class MCTS {
 
     private final int interacoes;
+    private final double C;
 
     /**
      * Cria um Algoritmo MCTS
      *
      * @param iteracoes número de iterações a executar por pesquisa
+     * @param C parâmetro de exploração da fórmula UCB1
+     *
+     * @pre iterações > 0
      */
-    public MCTS(int iteracoes) {
+    public MCTS(int iteracoes, double C) {
         this.interacoes = iteracoes;
+        this.C = C;
     }
 
     /**
      * Executa o MCTS a partir de um estado e devolve a melhor jogada
      *
      * @param state estado atual do jogo
+     *
      * @return o índice da jogada cujo nó teve mais simulações
+     * @pre state != null e !state.isGameOver()
+     * @post state não é alterado; o valor devolvido pertence a state.getAvailableMoves()
+     *
+     * @throws IllegalStateException se o jogo já tiver terminado
      */
     public int search(Ilayout state){
-        MCTSNode root = new MCTSNode(state, null, -1, state.getTurn());
+        if(state.isGameOver()){
+            throw new IllegalStateException("O jogo já terminou: não há jogadas possíveis.");
+        }
+
+        MCTSNode root = new MCTSNode(state, null, -1, state.getTurn(), C);
 
         for(int i = 0; i < this.interacoes; i++){
             MCTSNode node = select(root);

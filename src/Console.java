@@ -52,22 +52,29 @@ public class Console {
      * For reading in and interpreting the move that the user types into the console.
      */
     private int getHumanMove() {
-        printGameStatus ();
-        System.out.print("Index of move: ");
+        while (true) {
+            printGameStatus();
+            System.out.print("Index of move: ");
 
-        int move = sc.nextInt();
+            if (!sc.hasNextInt()) {
+                sc.next();
+                IO.println("\nInvalid input. Please type a number.");
+                continue;
+            }
+            int move = sc.nextInt();
 
-        if (move < 0 || move >= Ilayout.N* Ilayout.M) {
-           IO.println("\nInvalid move.");
-           IO.println("\nThe index of the move must be between 0 and "
-                    + (Ilayout.N * Ilayout.M - 1) + ", inclusive.");
-        } else if (!board.isBlank(move)) {
-           IO.println("\nInvalid move.");
-           IO.println("\nThe selected index must be blank.");
+            if (move < 0 || move >= Ilayout.N * Ilayout.M) {
+                IO.println("\nInvalid move.");
+                IO.println("\nThe index of the move must be between 0 and "
+                        + (Ilayout.N * Ilayout.M - 1) + ", inclusive.");
+            } else if (!board.isBlank(move)) {
+                IO.println("\nInvalid move.");
+                IO.println("\nThe selected index must be blank.");
+            } else {
+                return move;
+            }
         }
-        return move;
     }
-
 
     private void printWinner () {
         Ilayout.ID winner = board.getWinner();

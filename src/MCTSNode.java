@@ -1,25 +1,23 @@
-/**
- * Ná da árvore de pesquisa do algoritmo Monte Carlo Tree Search (MCTS)
- *
- * Cada nó representa um estado do jogo e guarda as estatísticas recolhidas
- * nas simulações (número de visitas e vitórias acumuladas), usadas para
- * orientar a pesquisa através da fórmula UCB1
- */
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
+/**
+ * Nó da árvore de pesquisa do algoritmo Monte Carlo Tree Search (MCTS)
+ * Cada nó representa um estado do jogo e guarda as estatísticas recolhidas
+ * nas simulações (número de visitas e vitórias acumuladas), usadas para
+ * orientar a pesquisa através da fórmula UCB1
+ */
 public class MCTSNode {
     private final Ilayout state;
     private final MCTSNode parent;
     private ArrayList<MCTSNode> children;
     private int visits;
     private double wins;
-    private int move;
-    private Ilayout.ID maxPlayer;
+    private final int move;
+    private final Ilayout.ID maxPlayer;
 
-    private double C = 1.4;
+    private final double C;
     private static final Random rand = new Random();
 
     /**
@@ -27,9 +25,13 @@ public class MCTSNode {
      *
      * @param state estado do jogo representado pelo nó
      * @param parent nó pai ou null para a raiz
+     * @param maxPlayer  jogador MAX, do ponto de vista do qual as vitórias são contadas
      * @param move jogada que levou do pai a este nó, ou -1 para a raiz
+     * @param C parâmetro de exploração da fórmula UCB1
+     *
+     * @pre state != null e maxPlayer é X ou O
      */
-    MCTSNode(Ilayout state, MCTSNode parent, int move, Ilayout.ID maxPlayer) {
+    MCTSNode(Ilayout state, MCTSNode parent, int move, Ilayout.ID maxPlayer, double C) {
         this.state = state;
         this.parent = parent;
         children = new ArrayList<>();
@@ -37,10 +39,11 @@ public class MCTSNode {
         wins = 0.0;
         this.move = move;
         this.maxPlayer = maxPlayer;
+        this.C = C;
     }
 
     /**
-     * Verifica se o estado deste nó é terminal (alguem ganhou ou é um empate)
+     * Verifica se o estado deste nó é terminal (alguém ganhou ou é um empate)
      *
      * @return true se o jogo terminou, false caso contrário
      */
@@ -72,16 +75,21 @@ public class MCTSNode {
      * ainda não explorada e adiciona-o à árvore
      *
      * @return o novo nó filho criado
+     * @pre !is_terminal() e !is_fully_expanded()
+     * @post getChildren().size() aumentou 1; o novo filho corresponde a uma jogada ainda não expandida; o estado deste nó não é alterado
      */
     public MCTSNode expand(){
         HashSet<Integer> actions = state.getAvailableMoves();
+
         for(MCTSNode child : children){
             actions.remove(child.move);
         }
 
+        Integer action = actions.iterator().next();
+
         Ilayout newState = (Ilayout) state.clone();
-        newState.move(actions.iterator().next());
-        MCTSNode child = new MCTSNode(newState, this, actions.iterator().next(), this.maxPlayer);
+        newState.move(action);
+        MCTSNode child = new MCTSNode(newState, this, action, this.maxPlayer, C);
 
         children.add(child);
         return child;
@@ -92,6 +100,8 @@ public class MCTSNode {
      * Filhos nunca visitados têm prioridade
      *
      * @return o filho selecionado
+     * @pre !getChildren().isEmpty()
+     * @post devolve um elemento de getChildren()
      */
     public MCTSNode best_child(){
         for (MCTSNode child : children){
@@ -130,6 +140,7 @@ public class MCTSNode {
      * joga aleatoriamente até o jogo terminar
      *
      * @return o vencedor da simulação, ou "Blank" em caso de empate
+     * @post o estado deste nó não é alterado; devolve X, O ou Blank
      */
     public Ilayout.ID rollout(){
         Ilayout newState = (Ilayout) state.clone();
@@ -150,6 +161,8 @@ public class MCTSNode {
      * Cada nó soma 1 vitória se ganhar, 0,5 em caso de empate e 0 em caso de derrota
      *
      * @param winner vencedor da simulação, "Blank" se empate
+     * @post as visitas deste nó e de todos os antecessores aumentam 1; as vitórias
+     * aumentam 1 se ganhou o MAX, 0,5 em caso de empate, e não mudam se perdeu
      */
     public void backPropagate(Ilayout.ID winner){
         this.visits++;
